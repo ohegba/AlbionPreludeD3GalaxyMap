@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+
+a
+{
+ text-decoration: underline;
+ color:#0000FF;
+}
+
+div
+{
+	position:fixed;
+	background-color:white;
+	width:75%;
+	border: 1px solid black;
+	background: rgba(255, 255, 255, 0.8);
+	position: fixed;
+right: 0;
+bottom: 0;
+}
+
+h1
+{
+	font-family:"Helvetica Neue";
+}
+#SYS
+{
+	font-family:"Helvetica Neue";
+	font-size:150%;
+}
+
+p
+{
+	width:70%;
+	font-size:100%;
+	font-family:Tahoma;
+	
+}
+
+</style>
+<title>  Graph Viz IN SPACE!! : Mapping the X Universe </title>
+<body>
+<h1 id="title"> Graph Viz IN SPACE!!: Mapping the X Universe </h1>
+<p> This is a force-directed graph showing the connectivity of sectors in <a href="http://www.egosoft.com/games/x3ap/info_en.php">X3: Albion Prelude.</a><br>Click a node to get more information about that sector; drag to disrupt the graph.<br> Graph code from d3.js, descriptions from X3TC Wiki. Shortest-path solving using Dijkstra's Algorithm has also been included.
+<div id="panel">
+
+
+<a style="top:0;padding:0;float:right;position:relative;" onclick="toggleInfo();">[X]</a>
+<h2 id="SYS">  </h2>
+<p id="SYS2">  </p>
+<a style="top:0;padding:0;float:right;position:relative;" onclick="setRoutingDestination(selNode)">Set as Destination in Route Guidance</a>
+</div>
+<br><br><br><br><br><br>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+var destNode = null, selNode = null;
+
+function setRoutingDestination (n)
+{
+	destNode = n;
+
+}
+
+sectors = {
+"nodes":[
+{"Population": "84,386,241", "Planets": "2", "Sun Strength": "100%", "Description": "Once thought by the Paranid to be a portal to the Ancients, such beliefs were quickly quashed in the realisation that Pirate signalling beacons were the cause of their delusion. After an embarrassing retreat, this sector became the domain of the lawless.", "Name": "Vestibule of Creation", "Sector Size": "40 km", "Race": "Pirates", "Security Level": "Border"},
+{"Population": "22,773,115", "Planets": "0", "Sun Strength": "150%", "Description": "Miners within this sector are constantly aware that their work is undertaken under the strict scrutiny of security forces, allocated to protect the jump gate recently located from Earth. The military presence here is sometimes overwhelming, and often intimidating.", "Name": "Asteroid Belt", "Sector Size": "120 km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "8,573,780", "Planets": "3", "Sun Strength": "100%", "Description": "After the Kha'ak attack on President's End, a decision was made to improve the security of Argon home systems. A taskforce was assembled in The Wall and sent to Elena's Fortune. Orders were given to capture and retake the sector, after a Kha'ak attack decimated the pirate forces who had held control over this system for so long. Argon surveillance expeditions later discovered that the Kha'ak attack destroyed the gate leading to the neighboring system of Olmancketslat's Treaty", "Name": "Elena's Fortune", "Sector Size": "80 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "1,712,354,144", "Planets": "2", "Sun Strength": "100%", "Description": "The Teladi have only recently re-discovered this historically important system. Ianamus Zura already has its own thriving economy, mainly due to its position on a busy trade route. It provides a broad range of raw materials to many neighbouring systems and serves as the HQ of both the Profit Guild and Teladi Company in the new territories.", "Name": "Ianamus Zura", "Sector Size": "70 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "", "Name": "Jupiter 2", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "", "Name": "Jupiter 3", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "2,103,883,426", "Planets": "2", "Sun Strength": "150%", "Description": "The jewel of Sol system and home to mankind, Earth. While many see similarities to the Argon homeworld, Earth holds grace and beauty that few could deny as being anything other than unique. For this and painful historic reasons, the AGI Task Force zealously guards the planet and the imposing orbital ring, the Torus.", "Name": "Earth", "Sector Size": "180 km", "Race": "Terran", "Security Level": "Border"},
+{"Population": "96,334,094", "Planets": "3", "Sun Strength": "100%", "Description": "Deep in unclaimed space, this system is little more than a long-established and well-respected ambush. Rogue Teladi and Argon stations provide cover for aggressive Pirate strike forces. A single, cratered moon holds the wrecks of many of the ships disabled, stripped and left to fall to its surface by freebooters, hullcutters and privateers.", "Name": "Bala Gi's Joy", "Sector Size": "90 km", "Race": "Pirate", "Security Level": "Border"},
+{"Population": "59,569,205", "Planets": "5", "Sun Strength": "150%", "Description": "The powerful Rhonkar Family runs this large Split weapons outpost. It is a heavily industrialized system with a lack of warmth and lays emphasis on functionality that is common to all Split space installations. Rhonkar Family warriors patrol their property efficiently and deal with unwanted guests with little courtesy.", "Name": "Rhonkar's Fire", "Sector Size": "70 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "96,247,662", "Planets": "1", "Sun Strength": "100%", "Description": "The last great Duke once visited this sector. After a few short hours, he collapsed and fell into unconsciousness. When he woke up, he claimed he had visions of a great battle in this system between the Paranid and a strange alien race, now known to be the Kha'ak. The Great Duke decided to consult the monks at the Great Monastery on Paranid Prime in the valley of the setting star. His visions did not occur again and he was granted permission to set up a new temple in this system where he first had his vision. He died without ever knowing the true nature of his visions, or the horror that would follow.", "Name": "Duke's Vision", "Sector Size": "100 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "9,846,460", "Planets": "0", "Sun Strength": "0%", "Description": "LooManckStrat's Legacy famously has an extensive minefield covering the elliptic plane.  New visitors to the sector are advised to stay within the lane markers. Deviating from the cleared path risks sudden death.", "Name": "LooManckStrat's Legacy", "Sector Size": "40 km", "Race": "Pirates", "Security Level": "Border"},
+{"Population": "65,055,497", "Planets": "1", "Sun Strength": "150%", "Description": "The Teladi who settled this region chose to do so not entirely out of the desire of profit. Knowing all to many sectors flourished from under-handed deals and kick-backs, business here remains both noble and honest, for now at least.", "Name": "Sanctity of Corruption", "Sector Size": "80 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "24,561,112", "Planets": "1", "Sun Strength": "150%", "Description": "Empire's Edge was once the corner of the known Universe, but today it is a crossroads in the middle of Paranid space and the border of Yaki space to the west. It is a favorite location for players wishing to train Local Traders using Trade Command Software Mk. 3, as the sector has many factories capable of selling directly to one another.", "Name": "Empire's Edge", "Sector Size": "40 km", "Race": "Paranid", "Security Level": "Core"},
+{"Population": "60,589,048", "Planets": "2", "Sun Strength": "150%", "Description": "This sector is extremely crowded with asteroids. For a patient player willing to carefully tow their mines out of the dense thicket, this sector makes a good candidate for player complexes, as long as good relations with the Yaki to the south are maintained.", "Name": "Savage Spur", "Sector Size": "90 km", "Race": "Unknown", "Security Level": "Border"},
+{"Population": "43,861,248", "Planets": "2", "Sun Strength": "100%", "Description": "This sparse system is primarily dedicated to the production of food. The Rastar Oil refineries rely on pirate stations for their supply of space flies and import all other raw materials from outside the system. A dense, mineral-rich asteroid field fills the whole system. Split superstition forbids mining the largest of these asteroids, claiming them to be cursed.", "Name": "Rhonkar's Clouds", "Sector Size": "80 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "72,922,900", "Planets": "2", "Sun Strength": "150%", "Description": "Being the first and only Teladi Sector located next to a Paranid Sector, the Teladi opened this sector for massive amounts of trade, but trade with the Paranid was not a sensible decision. Turnover was low and few Paranid passed through sectors with only the odd ship coming in for supplies. The Teladi Chairman for this sector noticed they were slowly going into debt and so pulled out most of the high tech factories. The sector was then dubbed Bad Debt and the name has since stuck. Although relations between the two races are improving, trade is increasing at a minimal rate. Because of this debt, the Teladi trade dock is relatively quiet, with cargo bays remaining empty and most market sections closed off ans in a state of decay.", "Name": "Bad Debt", "Sector Size": "55 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "31,326,067", "Planets": "3", "Sun Strength": "150%", "Description": "Weaver's Tempest is the Yaki's Core sector, though their Shipyard is located to the north in Senator's Badlands. The sector is patrolled by the Yaki flagship, the Shuri.", "Name": "Weaver's Tempest", "Sector Size": "100 km", "Race": "Yaki", "Security Level": "Core"},
+{"Population": "82,991,122", "Planets": "1", "Sun Strength": "150%", "Description": "Massive by even Terran standards, Jupiter's magnificence is rarely lost on those who enter this sector. The planet's upper atmosphere hosts a wide array of semi-organic life, much of which is still under analysis.", "Name": "Jupiter", "Sector Size": "120 km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "77,729,887", "Planets": "2", "Sun Strength": "150%", "Description": "A busy and lucrative system with an economy dependent on high-quality electronics. Blue Profit is most famous as the source of the distinctive style of music devised by Teladi factory workers. Combining Teladi reed-whistles and Boron toneshells with Argon and Teladi percussion instruments, 'Teladi Blues' is appreciated by many sentient species.", "Name": "Blue Profit", "Sector Size": "100 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "98,944,839", "Planets": "3", "Sun Strength": "150%", "Description": "The last Xenon conflict with the sentient races brought forth many heroes. This system is named after one of the foremost of those who risked all to repel the Xenon threat. Although the name still has deep echoes of honor, courage and wisdom, the system is corrupt and dangerous. The Argon are particular concerned that the use of this system as a base for the slave trade is an insult to one of their most honored names.", "Name": "Brennan's Triumph", "Sector Size": "50 km", "Race": "Pirate", "Security Level": "Border"},
+{"Population": "49,144,387", "Planets": "2", "Sun Strength": "150%", "Description": "The lesser family of Rhy, in the days before space colonisation, spent most of their time on Split Prime, using their knowledge of espionage and sabotage to plunder other families resources and claim them as salvage. Rhy moved off-world to their own system when they became a more powerful family, after helping the family Rhonkar in their battle against the old Patriarch. This sector contains half of the family's assets in space trading, incliding their own carrier. Rhy no longer focuses solely on espionage and have started to build up their own military. There are also rumers in local bars of a hidden gate in or near this system.", "Name": "Family Rhy", "Sector Size": "70 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "107,468,312", "Planets": "1", "Sun Strength": "150%", "Description": "Paranid Prime is a great place to get weapons and missiles of many types, as they tend to accumulate at the stations found in the sector. Often, many missile and ship weapons factories can be found there as well. It's often a good one-stop shop for early players who aren't yet producing their own equipment, but, like everything in the X-Universe, this is not always the case.", "Name": "Paranid Prime", "Sector Size": "40 km", "Race": "Paranid", "Security Level": "Core"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "Due to Draconian security measures placed on Earth access, the USC chose to place their main base of operations in this sector. This who reside here consider it fitting that the planet, named after the mythical god of war, has become the home of USC.", "Name": "Mars", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "71,313,091", "Planets": "2", "Sun Strength": "150%", "Description": "This Argon system's economy is heavily reliant on trade between the Argon and their Boron allies. The Foundation Guild has its Headquarters and the Trading Station is the temporary seat of the newly founded Boron Chamber of Commerce.  The many cattle ranches here supply Argnu Beef for the local and export markets.", "Name": "The Hole", "Sector Size": "110 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "57,228,713", "Planets": "1", "Sun Strength": "450%", "Description": "The discovery of this intriguing sector has been a welcome distraction for the neighbouring Argon, who are facing conflict. Each star in this trinary system has a distinctively different composition as well as a very active solar cycle. Initial attempts to build stations in this sector failed when violent solar activity forced an evacuation. The lone planet is a barren world, gravitationally locked with the central star. Studies of its surface will hopefully answer questions about this sector's past and suggest colonisation options for the future. The Argon Government has warned against building new stations or visiting in modestly-shielded ships, for fear of another solar event. Some entrepreneurs, looking to exploit the energy of the suns, have completely ignored any warnings.", "Name": "Harmony of Perpetuity", "Sector Size": "110 km", "Race": "Goner", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "", "Name": "Saturn 2", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "27,832,225", "Planets": "4", "Sun Strength": "100%", "Description": "Originally discovered and claimed by the Split Patriarch as a hideaway, this sector is now a thriving commercial colony. It is from here that the Split Patriarch ordered his forces to repel attacks from the rebelling Family Rhonkar. In the final days of the war, the sector was thought to be impenetrable after the deployment of three of the Patriarch's latest prototype destroyers. They managed to defend the sector with their armament of 20 plasma throwers per ship. The Rhonkar Family eventually found a way through this blockade. Sending in a small fleet of heavy fighters, they made a successful kamikaze run against the command vessel. Finally a combined Rhonkar - Njy fleet attacked, eliminating the other two prototypes. The Patriarch was captured and deposed. The plans for the destroyers were lost in the battle.", "Name": "Patriarch's Retreat", "Sector Size": "180 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "32,041,651", "Planets": "3", "Sun Strength": "150%", "Description": "This busy colony was named in honour of the warriors and civilians of all species who perished in the first great Xenon conflict. The system itself is sparse and lacks many basic conforts. The Teladi here possibly even more avaricious and sneaky than their homeworld brothers.", "Name": "Eighteen Billion", "Sector Size": "70 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "4,142,839", "Planets": "3", "Sun Strength": "150%", "Description": "After the Xenon Conflict, this system was abandoned. When retreating Xenon completely destroyed a neighboring system by forcing its twin suns to go nova, the colonies and factories of this system were eradicated. It is the home to many refugees of the last Xenon war and the other minor wars that came before it. The people here begin to build new lives and homes while they mourn their past and hope for their future.", "Name": "Hatikvah's Faith", "Sector Size": "70 km", "Race": "Pirate", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "Aldrin | Aldrin 2 | Heretic's End | Terran Unknown Sector 1 (Megnir) | Terran Unknown Sector 2 (Althes) | Terran Unknown Sector 3 (Segaris) | Unknown Sector (7,4) | Unknown Sector (8,4) | Unknown Sector (8,5) | Unknown Sector (7,5)", "Name": "Venus", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "22,500", "Planets": "0", "Sun Strength": "150%", "Description": "Perdition's flames brought fear to the hearts of both Argon and Paranid, and fury and rage from both sides have quenched the firestorm that burned through this sector. Perdition's end may soon be near, but the fires of conquest stil burn brightly. ", "Name": "Perdition's End", "Sector Size": "80 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "93,822,716", "Planets": "2", "Sun Strength": "150%", "Description": "Discovered by chance in the travels of an almost mythical adventurer, the governments of the individual races were unable to agree on who should administer this system in the future. In order to underline their own requirements, each race hurriedly built their own space stations. Despite the hefty protests of the Patriarch of the Split, the female discoverer was appointed during the transition to oversee sector development. Each government sent their own workers and colonists, transporters and combat ships, even mighty destroyers to keep the peace in this virgin system. It was the desire of the discoverer of this system to name it after a ship, flown by another pilot whose origins were once a fabled planet, Earth. The sector is now under Terracorp administration.", "Name": "Getsu Fune", "Sector Size": "125 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "66,196,119", "Planets": "2", "Sun Strength": "150%", "Description": "Forging ahead with the combined strength of a mining and military operation, the Teladi have strengthened their foothold in the new colonies with this sector. Their plans however do not rest within these gates alone.", "Name": "Company Strength", "Sector Size": "80 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "No asteroid known in this sector", "Name": "Uranus 2", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "No asteroid known in this sector", "Name": "Uranus 3", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "4,842,085", "Planets": "4", "Sun Strength": "150%", "Description": "Although this system is a hive of Agricultural and Industrial activity, many respectable traders and merchants avoid it. Adventure seekers and rogues of all species frequent this system. The Pirate Base is a real den of iniquity and squalor. This system is a major link in the Split-Teladi trade route and its safety is jealously protected by the Profit Guild.", "Name": "Company Pride", "Sector Size": "55 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "24,135,799", "Planets": "2", "Sun Strength": "100%", "Description": "This sector, when discovered by the Paranid, was awash with Kha'ak. Paranid forces had daily skirmishes with them until oneday, the Kha'ak completely disappeared from the sector, never to be seen there again.", "Name": "Perpetual Sin", "Sector Size": "80 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "58,264,253", "Planets": "2", "Sun Strength": "100%", "Description": "The planet 'Oceania' is a huge world enveloped in swirling coloured mists and encircled with spectacular dust rings. It is a popular medidative resort for Boron monks who spend weeks in isolation in the planet's aquatic wilderness to contemplate the purpose and meaning of life. The installations here service these pilgrims' basic needs.", "Name": "Menelaus's Paradise", "Sector Size": "90 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "30,865,289", "Planets": "0", "Sun Strength": "150%", "Description": "Despite a growing Teladi presence in this sector, and plans to take over control, pirate forces in this sector simply don't care. Perhaps mindful that the primary commerce here involves narcotics, the Teladi are happy to take advantage of the situation.", "Name": "Spaceweed Grove", "Sector Size": "80 km", "Race": "Pirates", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "300%", "Description": "The TUS1 shipyard is not present until the Aldrin Expansion plot is nearly complete, and not fully kitted until that plot concludes.", "Name": "Megnir", "Sector Size": "km", "Race": "Terran", "Security Level": "Border"},
+{"Population": "38,966", "Planets": "3", "Sun Strength": "100%", "Description": "Goner prophets and mystics, their mission now complete, travel along a very different path to that of their forefathers. The burning prophecy that Nathan R Gunne's words once held is embodied in this sector, now home to an ever-increasing number of believers, intent on ensuring that the truth of Gunne's Crusade lives on in eternity. To that end, each new station is blessed and considered a distant annexe of the Goner Temple.", "Name": "Elysium of Light", "Sector Size": "40 km", "Race": "Goner", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "None", "Name": "Segaris", "Sector Size": "km", "Race": "Terran", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "A few derelict ships and stations decorate this otherwise empty sector.", "Name": "Avarice", "Sector Size": "km", "Race": "Unknown", "Security Level": "Border"},
+{"Population": "92,074,805", "Planets": "2", "Sun Strength": "150%", "Description": "This sector is occupied by one planet and the remains of its only moon. It is unknown how the moon was destroyed in this manner, but the fallout has caused the planet's atmosphere to become irradiated, leaving it deadly to all forms of life. When the Paranid moved in, they set up a standard colony with basic resources. Hopefully in time more will be built.", "Name": "Friar's Retreat", "Sector Size": "60 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "96,750,723", "Planets": "3", "Sun Strength": "150%", "Description": "This system provides the Split with a wide variety of food and raw materials as well as being the production centre for their heavy ship's Pulse Beam Lasers. Far from the 'wild space', this system is relatively safe from pirate attack, although occasional skirmishes are reported.", "Name": "Family Zein", "Sector Size": "90 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "19,352,424", "Planets": "2", "Sun Strength": "150%", "Description": "Heretic's End is a recently discovered Sector. Originally colonised by the Paranid, it was one of the most lonely backwater Sectors known to the Commonwealth, and the only use anyone could think for it was as a training ground for fighter pilots.", "Name": "Heretic's End", "Sector Size": "60 km", "Race": "Terran", "Security Level": "Border"},
+{"Population": "66,534,325", "Planets": "1", "Sun Strength": "150%", "Description": "On the fringes of civilized space, this deep space system is no stranger to raids by pirates and other hostile ships. Founded by the Split leader Thuruk as a prison colony for Boron captured during their wars, it has evolved into a thriving industrial outpost.", "Name": "Thuruk's Beard", "Sector Size": "140 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "94,019,273", "Planets": "2", "Sun Strength": "150%", "Description": "This Argon colony was founded by Kleo Glut, head of the Argon Agricultural Council, but as work continued it was discovered that more uses could be found for the system. The sector is owned by the AAC which means very little money has be put aside for updating non-essential technology. Residents have thus needed to find a way to make money apart from selling wares and produce. It is believed that there are some illegal goods being sold in the sector, but this has yet to be proven as residents police and protect this sector themselves. Streams of nebula also inhabit this system, and Circle Of Labour is usually home to several scientists who try to find a way to mine this untouched resource. The system is unusual as the sun bursts with strong phases of intense light.", "Name": "Circle of Labour", "Sector Size": "80 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "46,238,525", "Planets": "3", "Sun Strength": "150%", "Description": "One of the Split's more remote Core sectors with a moderate output of agricultural products. Military operations here serve as a base for the building conflict in nearby sectors. Tension with the Boron is already high and set to escalate.", "Name": "Patriarch's Conclusion", "Sector Size": "80 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "86,002,225", "Planets": "5", "Sun Strength": "150%", "Description": "The fire pits of the planet of XaarXen were deemed to be holy by the priests of the Paranid Xaarist religion, after the original expedition vessel was consumed by a firestorm that formed from one of these pits.", "Name": "Consecrated Fire", "Sector Size": "115 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "73,317,414", "Planets": "3", "Sun Strength": "150%", "Description": "Holding the Strong Arms HQ, Thyn's Excavation provides funds and resources for the ongoing conflict in Veil of Delusion. Naturally this has extended to arms shipments wherever else they are needed. For the Split, the price of war is never too high.", "Name": "Thyn's Excavation", "Sector Size": "80 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "Aldrin | Aldrin 2 | Heretic's End | Terran Unknown Sector 1 (Megnir) | Terran Unknown Sector 2 (Althes) | Terran Unknown Sector 3 (Segaris) | Unknown Sector (Beyond Oort Cloud 1st) | Unknown Sector (Beyond Oort Cloud 2nd) | Unknown Sector (Beyond Oort Cloud 3rd) | Unknown Sector (Beyond Oort Cloud 4th)", "Name": "Althes", "Sector Size": "km", "Race": "Terran", "Security Level": "Border"},
+{"Population": "189,765", "Planets": "0", "Sun Strength": "150%", "Description": "Fully militarised, all traffic within this sector is marked for intense scrutiny. Nominal access to Shipyard and Equipment dock facilities are authorised once security clearance has been confirmed. Any interference with military affairs will be dealt with by lethal and overwhelming force.", "Name": "Argon Sector M148", "Sector Size": "80 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "3,963,277", "Planets": "1", "Sun Strength": "150%", "Description": "Located near the giant star of Lehril, this system is a source of strategic power for the Boron. Being a border colony to the local Split Family, this sector also acts as a crossroads for other Boron settlements, making it particularly important for passing trade. It is guarded by a lone destroyer with escorts, thus pirate activity here is minimal.", "Name": "Reservoir of Tranquility", "Sector Size": "50 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "26,873,903", "Planets": "3", "Sun Strength": "150%", "Description": "The planet 'Tethys' has a huge population and the Boron are determined to protect the billions living there from the dangerous lawlessness of nearby 'uncivilized' systems. The local economy is very reliant on import of raw materials - most notably Teladianium which is required by the many Bio Gas Factories", "Name": "Atreus' Clouds", "Sector Size": "100 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "55,711,517", "Planets": "0", "Sun Strength": "150%", "Description": "Without feature or feeling, Uranus stands torn between the grip of the inner system and the hopes of those who have made this silent behemoth their home.", "Name": "Uranus", "Sector Size": "100 km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "75,225,918", "Planets": "2", "Sun Strength": "150%", "Description": "The Argon Military have taken full advantage of the rich resources in this area. Competition is fierce with many companies all competing for business. There are still profit opportunities, however, in mining for the export market. The station here acts as a resupply point for Argon Military fighters and a good selection of surplus weapon systems can be found there.", "Name": "Red Light", "Sector Size": "65 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "92,098,548", "Planets": "3", "Sun Strength": "100%", "Description": "This system's heavy security is due to its principal export - Jewellery and Maja Snails. The wild and untamed twin planets here are home to a nomadic workforce, famous for their expertise in raising the delicate snails. These shy, reclusive Paranid tend Snail Farms across all known space. The most valuable installations in this system are protected on two sides by artificially constructed asteroid belts.", "Name": "Trinity Sanctum", "Sector Size": "60 km", "Race": "Paranid", "Security Level": "Core"},
+{"Population": "75,199,244", "Planets": "3", "Sun Strength": "150%", "Description": "This struggling Argon agricultural system is situated between the breathtaking planets \"Garleth Prime\" and \"Garleth Beta\". Recent attacks on supply lines by Xenon forces have led to many fire-fights among the installations, asteroids and the busy trade routes in this system.", "Name": "Treasure Chest", "Sector Size": "90 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "35,043,862", "Planets": "2", "Sun Strength": "150%", "Description": "Scattered in the shadow of the now terraformed planet 'Kho's Haven', this recently re-colonized system's intallations are mainly concerned with the production of high quality electronics and fabrics. Lax security arrangements make this system a favorite route for Pirate raiding parties looking for richer pickings.", "Name": "Home of Light", "Sector Size": "50 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "88,000,041", "Planets": "3", "Sun Strength": "150%", "Description": "The Boron produce high quality electronics and semi-organic computer systems as well as more conventional goods in this large and crowded sector. The supporting factories produce a wealth of raw materials for the local and export markets.", "Name": "Rolk's Drift", "Sector Size": "50 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "93,563,655", "Planets": "4", "Sun Strength": "150%", "Description": "The Priest Xaar ordained this sector in clear understanding that the nearby nova was seen by many to be a gateway to higher dimensions. Deemed secure enough for a strong agricultural and mining operation, it also poved to be a gateway to the Split expansion, and a means by which to curtail further Boron growth.", "Name": "Heaven's Assertion", "Sector Size": "80 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "83,210,674", "Planets": "1", "Sun Strength": "150%", "Description": "Originally held by the Boron, there remains an uneasy truce here. Several high-renking members of Family Rhonkar, accused of unauthorised attempts to purge the sector of all Boron occupation, were placed on trial and summarily executed for genocide. While time has eased the pain of those who remember, forgiveness is far from forthcoming.", "Name": "Rhonkar's Trial", "Sector Size": "80 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "16,433,851", "Planets": "2", "Sun Strength": "150%", "Description": "This sector provides cheap, clean power to all the Boron sectors. The Boron's ecologically sensitive ideology requires all power used in Boron sectors, even planetary power supplies, to be produced space-side.", "Name": "Queen's Space", "Sector Size": "90 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "71,731,390", "Planets": "0", "Sun Strength": "150%", "Description": "Owned by Pirates, and usually traded along by Teladi and Pirate traders. Traders usually move downwards from Homily of Perpetuity, trading energy from the Solar Power Plants to the 3 stations in the sector. Traders then move freely between these two pirate sectors, trading in various resources that will eventually result in the manufacture of Spaceweed.", "Name": "Acquisition Repository", "Sector Size": "80 km", "Race": "Pirates", "Security Level": "Border"},
+{"Population": "55,430,403", "Planets": "2", "Sun Strength": "100%", "Description": "Prevented by the Argon from invading Boron territory, the Split have set out to colonise the space around their own systems. Tharka's Sun was the first of these new colonies, its mineral resources and agricultural plants providing raw materials for the Split to push into new systems.", "Name": "Tharka's Sun", "Sector Size": "65 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "77,380,756", "Planets": "2", "Sun Strength": "100%", "Description": "This sector contains one half of Family Rhy's assets. They use this sytem as a supply depot to passing split craft. The planet's main colony consists of a large geodesic dome. Inside one can find large amounts of weaponry being sold in armoury markets. Pirate activity in this system is also increased because of the local activity, but the Rhy Family does nothing to stop this. Being on the border of the local Teladi Sectores, Rhy's Desire can usually find a large numbers of teladi coming in to trade and purchase these illegal goods.", "Name": "Rhy's Desire", "Sector Size": "60 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "69,106,948", "Planets": "1", "Sun Strength": "150%", "Description": "Long-range scout patrols from Cardinal's Domain ventured upon this sectorat the same timeas the arrival of a mining expedition from Aladna Hill. The resulting tensions did little but re-open old wounds. Few Paranid would deny the opportunity to fan the flames of a war brought over from the old world.", "Name": "Clarity's End", "Sector Size": "80 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "38,323,527", "Planets": "3", "Sun Strength": "150%", "Description": "Midnight Star was discovered by Argon Expeditionary Forces and named because of the angle at which the new colonised planet faces the sun, leaving one hemisphere in eternal darkness.", "Name": "Midnight Star", "Sector Size": "120 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "75,904,677", "Planets": "4", "Sun Strength": "150%", "Description": "Highly destructive PAC/PPC Weapons are built here under strict Teladi Military guard. Most of the personnel in this system are tied to the military arm of the Profit Guild or the smaller Teladi Company Navy. The market for recreational and luxury goods is high among the personnel on guard detail in a relatively safe system.", "Name": "Ceo's Sprite", "Sector Size": "120 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "15,912,061", "Planets": "3", "Sun Strength": "150%", "Description": "Located newt to Split space, this system is usually on a knife edge of tension. The Boron have no military presence here lest they give the Split an excuse to attack and instead rely on the covert intelligence and good will of other species to dissuade the Split from aggression.", "Name": "Hila's Joy", "Sector Size": "80 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "29,956,087", "Planets": "2", "Sun Strength": "150%", "Description": "The original name for this sector was Light of Hope, until the Xenon attacked many years ago. It was clear that the sectors patrols wouldn't hold out against further attacks, so the colony was preparing for evacuation using small transport ships. Backup from the Argon Military was sent; four Titan class Destroyers and two Colossus Carriers, complete with fighters wings. They were to escort the transport ships out of the system, but before they could get the gate, Xenon ships jumped in and overwhelmed the fleet. All civilian ships escaped alongside a lone destroyer, the Challenger. Three years later, a joint Argon-Boron force took back Light of Hope and it was renamed Wastelands, reflecting the carnage and debris that the force found. Now cleared of that detritus and with the Xenon threat greatly dismished, its inhabitants strive to maintain a normal existence.", "Name": "Wastelands", "Sector Size": "70 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "56,736,073", "Planets": "0", "Sun Strength": "150%", "Description": "Those who enter here do so fo two reasons alone. To kill or be killed. Executor squads routinely patrol, laying in wait for pilots escorted into the sector to face their final moments before being taken by the void. The outer rim is littered with the corpses and wreckage of the damed and the wretched.", "Name": "Wretched Skies", "Sector Size": "80 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "43,355,289", "Planets": "4", "Sun Strength": "150%", "Description": "This sector was once occupied by the Argon Federation's largest station, the Antigone. It was attacked in 215 by the largest Xenon fleet known to date. The station launched its defense fleet when one of the Xenon ships fired into the docking bays, destroying several fighter wings and setting off a chain reaction from damaged propulsion systems in the process. The station was destroyed, killing thousands of people. Some crew and visitors managed to make it through the emergency escape pods that were recovered once the Xenon retreated. In one of the largest recovery efforts ever made by the Argon, medevac ships were dispatched to assist. One of these, the Springbird, was attacked while leaving the sector, forcing it into the atmosphere of the planet 'Sandwell'. All contact was subsequently lost. The recovery operation was extended to find survivors on the planet surface, none were ever located, perhaps from the scorching heat from the local star. The outpost has now become a place of remembrance for the many Argon who travel here to honor their war dead.", "Name": "Antigone Memorial", "Sector Size": "90 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "74,065,614", "Planets": "2", "Sun Strength": "150%", "Description": "Of little use to the Paranid, this system is leased by the Boron who have a budding outpost of refineries and chemical plants here. Limited trade between the Paranid and Boron takes place here and relations between the species are amicable. In return for Paranid protection the Boron lend their extensive knowledge in biochemistry to the Paranid efforts in cyber biology.", "Name": "Shore of Infinity", "Sector Size": "60 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "60,978,261", "Planets": "2", "Sun Strength": "150%", "Description": "Bathed in blood of war-torn nebulae, the Rhonkar Family chose this sector as a point form which to launch further onslaughts against all who opposed them, as well as lick their wounds when such battles fell short. In the outer rim, countless ware-dead are offered to the sun in remembrance of their struggle.", "Name": "Rhonkar's Might", "Sector Size": "120 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "51,642,812", "Planets": "4", "Sun Strength": "150%", "Description": "After the battle in the sector known today as Nopileos' Memorial, the Xenon have used this sector as a junkyard, storing and recycling ships here. The coordinates for this gate were lost, but a recent survey by Argon Expeditionary forces have since rediscovered the gate's location.", "Name": "Xenon Sector 101", "Sector Size": "70 km", "Race": "Xenon", "Security Level": "Border"},
+{"Population": "501,372,614", "Planets": "3", "Sun Strength": "100%", "Description": "The home system of the Split, Family Pride is a major resupply point for the Split military as well as having a bustling civilian commercial district. Its primary planet houses the HQ of the Council of All Families - the martial government that rules over Split affairs.", "Name": "Family Pride", "Sector Size": "50 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "34,458,106", "Planets": "5", "Sun Strength": "150%", "Description": "The Grand Exchange refers to the large skyscraper on the surface of Goldminer's Dream, the primary planet. The traders' exchange centre was supposed to control Teladi Company trade throughout the known universe. However repeated Kha'ak attacks on Teladi communications satellites halted the necessary communications.", "Name": "Grand Exchange", "Sector Size": "90 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "59,856,078", "Planets": "1", "Sun Strength": "150%", "Description": "With the discover of the North Gate in the neighbouring 'Shore of Infinity' sector, Light Water was founded. With a mixture of food production and solar power generators, this system has grown in importance. The name Light Water was given to this sector as the only habitable planet has an unusually low gravity for its size, its surface being mostly covered in water. The Boron have recently founded a planet-based colony using materials that were destined for the LooManckStrat's Legacy system before plans were scrapped.", "Name": "Light Water", "Sector Size": "80 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "84,669,161", "Planets": "3", "Sun Strength": "150%", "Description": "The Priest Duke brought this sector into being with only one thought. Overwhelming firepower. Heavily militarized, with both Shipyard and Equipment Dock facilities, it is both Citadel and Fortress. Your presence here will not go unnoticed.", "Name": "Duke's Citadel", "Sector Size": "40 km", "Race": "Paranid", "Security Level": "Core"},
+{"Population": "30,742,876", "Planets": "2", "Sun Strength": "150%", "Description": "This mining outpost is still being founded near the red gas giant 'Htt's Eye'. The trading, food and materials installations are in place and waiting to service the eagerly awaited private mining outfits who are always looking for new sources of minerals.", "Name": "Montalaar", "Sector Size": "65 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "Unknown", "Planets": "2", "Sun Strength": "150%", "Description": "Known as Unknown Sector (12,5) in previous versions of X3.", "Name": "Void of Opportunity", "Sector Size": "80 km", "Race": "Pirates", "Security Level": "Border"},
+{"Population": "15,912,061", "Planets": "3", "Sun Strength": "100%", "Description": "This small Boron outpost produces mineral products as well as the highly regarded Stotts Spices. It has attracted little hostile attention so far. The Boron tolerate the Split using this system as a convenient route to unexplored space in return for safe passage of Boron craft through certain Split sytems.", "Name": "Bluish Snout", "Sector Size": "65 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "189,451,753", "Planets": "3", "Sun Strength": "150%", "Description": "Bathed in the sacred light of the sun 'Sonra', The Argon home system is dominated by the planet 'Argon Prime'. This rich and beautiful world is densely populated and is usually protected by a large Argon Military force, a Titan Destroyer and more recently the Argon's latest flagship carrier, the Argon One, a Colossus class Carrier. Most of the needs of the Argon space fleet are catered for here in orbiting shipyards that also outfit for private fighters and transport ships with Argon technology.", "Name": "Argon Prime", "Sector Size": "90 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "29,461,209", "Planets": "1", "Sun Strength": "150%", "Description": "This system is jealously guarded by the Teladi as it contains scarce organic and mineral resources. The seas of Phobass IV produce kilometre-high waves - the best surfing in the universe bar none! The system has a thriving tourist trade based mainly on Boron day-trips to the planet's many underwater resorts.", "Name": "Spaceweed Drift", "Sector Size": "140 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "60,406,142", "Planets": "2", "Sun Strength": "150%", "Description": "This system was the center of the Xenon weapons test zone during the last conflict. The system's planet was blown apart by an experimental weapon, probably the rumored 'Galaxy Killer' device - used to vaporise and ignite the still burning 'Hadesfire Nebulae'. It is now a laid-back Boron mining and farming colony.", "Name": "Ocean of Fantasy", "Sector Size": "70 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "86,971,914", "Planets": "2", "Sun Strength": "100%", "Description": "One of the first systems to be colonised by the Argon after the last Xenon war. Aladna Hill was a supply and support base for the exploration of further systems. The jumpgate used by the Xenon to retreat was left intact, allowing rapid exploration of the space beyond this system and the ruthless hunting of Xenon stragglers by rogue squads of revenge seeking veterans.", "Name": "Aladna Hill", "Sector Size": "50 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "60,300,292", "Planets": "1", "Sun Strength": "150%", "Description": "Known by many as Sol's Eye, Neptune's stunning blue shimmer has enticed many to travel further in search of such sights. The cold harsh winds here are sometimes farmed as a viable source of hydrogen.", "Name": "Neptune", "Sector Size": "100 km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "68,895,047", "Planets": "2", "Sun Strength": "100%", "Description": "This sector was once the furthest Paranid system from Paranid Prime and it held that little for several decades. Despite the Xaarist Priests ran Preacher's Refuge with strict religious fervour and property. Their quiet and devoted worker-monks produced exquisite jewellery, inspiration 'Xja' poetry and the very best in automated, semi-intelligent weapons. In recent times, the focus has shifted to sophisticated technology production and interspecies trade has boomed, but the religious extremism remains, hidden in the shadows.", "Name": "Preacher's Refuge", "Sector Size": "65 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "67,834", "Planets": "1", "Sun Strength": "150%", "Description": "This region was chosen by JSDD as the second sector within the Albion system for settlement. This is most likely due to the slightly higher solar intensity which has led to this area providing most of the energy for Jonferco's operation in the system, fuelling their rapid expansion. In addition to the power production facilities, this sector also houses a similar mixture of high and low tech facilites in Albion Alpha, which allows the sector to be largely self-reliant.", "Name": "Albion Beta", "Sector Size": "100 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "34,530,217", "Planets": "3", "Sun Strength": "150%", "Description": "This sector is considered to be one of the high importance. In ancient times, the Emperor's palace in the high mountains of the Paranid Homeworld became so cold the ice would keep away any travellers. The Emperor chose on such occasions to stay at his winter palace in the equatorial region. When the Xenon nearly destroyed Paranid Prime's atmosphere, the equatorial region was all but lost. Until recently the Emperor stayed at his palace in the mountains, accessible because of the heat from the Xenon experiment. In order to keep with tradition he set up a new winter palace in this sector, overlooking a great lake at the foot on the Kar Miat Mountains. In the winter of Paranid Prime's northern hemisphere, the Emperor usually occupies this sector with his advisory Dukes, keeping the long tradition that was lost fro so long.", "Name": "Emperor's Wisdom", "Sector Size": "160 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "28,926,907", "Planets": "4", "Sun Strength": "100%", "Description": "The Split have chosen to maintain this sector as little more than a trench upon which to launch further attacks against the Boron in nearby sectors. Boron incursions are routine, as they struggle to regain control. There is little here that does not involve war or conquest.", "Name": "Contorted Dominion", "Sector Size": "80 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "Ownerless ships in sector.", "Name": "Gaian Star", "Sector Size": "km", "Race": "Pirates", "Security Level": "Border"},
+{"Population": "90,439,049", "Planets": "2", "Sun Strength": "100%", "Description": "With a wealth of untapped mineral resources and busy commercial and industrial installations, trade in the Teladi's home system is potentially very lucrative. Although well policed, the wealth of this system attracts opportunistic Pirate activity. To guard the profit of the many, a Teladi Destroyer often stands guard over this sector.", "Name": "Seizewell", "Sector Size": "70 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "83,996,752", "Planets": "2", "Sun Strength": "100%", "Description": "Weapons are required by many of the hidden outposts and illicit operations in unclaimed space. this system provides some of the necessary supplies and is protected by both a covert Pirate presence and a thick asteroid field. The mineral content of these asteroids is likely to cause a conflict between the smugglers and the legitimate mining corporations sooner or later.", "Name": "Olmancketslat's Treaty", "Sector Size": "65 km", "Race": "Pirate", "Security Level": "Border"},
+{"Population": "95,139,430", "Planets": "2", "Sun Strength": "150%", "Description": "Originally discovered and declared lifeless by the Earth science vessel 'Winterblossom', under the command of Rene Farnham, this system is now a lawless community of high-tech criminals. The illegal computer and weapons systems covertly built here are renowned for innovation if not reliability, none of which you will find publicly available. The hackers and cyberpunks who operate here are notoriously paranoid and are heavily guarded by armed enforcers.", "Name": "Farnham's Legend", "Sector Size": "60 km", "Race": "Pirate", "Security Level": "Border"},
+{"Population": "39,552,870", "Planets": "1", "Sun Strength": "150%", "Description": "The Boron colonised this sector with dreams of such magnificence even the Queen offered her blessings. Flourishing for a great while, such dreams indeed became reality until the Split discovered and gained control over the connecting sector. Trade turned to war and dreams once cherished were left faded and broken.", "Name": "Faded Dreams", "Sector Size": "80 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "72,263,747", "Planets": "3", "Sun Strength": "100%", "Description": "The Ore and Silicon mines in this system provide mineral resources to the entire Paranid Empire. These energy hungry mines operate continuously, their workers dedicating their labor to the glory of Xaar. The Paranid Empire permits limited mining on the untapped asteroids in this sector, but only Paranid may enter the sacred mines on the 'rusty planet' XylaXaar.", "Name": "Emperor Mines", "Sector Size": "65 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "28,360,448", "Planets": "3", "Sun Strength": "150%", "Description": "This system contains the main Equipment Dock used to refit medium Paranid Fighters. These weapons are of the highest quality and Paranid technology is extremely reliable. This system was hit heavily in the last Xenon conflict and security is still tight. This system represents the far border of the 'Old Paranid Empire,' the 'New Empire' consisting of territories claimed since the conflict.", "Name": "Emperor's Ridge", "Sector Size": "60 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "19,589,693", "Planets": "3", "Sun Strength": "150%", "Description": "This new Boron colony is being constructed with the aid of the Argon. After heavy losses in the Split and Xenon conflicts the Boron are eager not to confine themselves to one cluster of systems as they have in the past. The foundations of the thriving mining colony have already been completed and stage two is well underway.", "Name": "Rolk's Legacy", "Sector Size": "90 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "59,700,176", "Planets": "2", "Sun Strength": "150%", "Description": "This mining outpost is surrounded by a field of mineral bearing asteroids with a particularly dense asteroid field to the north. Pirate activity is light and generally non-aggressive, mostly transports headed for the north gate. This is fortunate as high-speed combat in this system is made difficult by the asteroids which also play havoc with missile targeting scanners.", "Name": "Ore Belt", "Sector Size": "60 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "2,591,040", "Planets": "4", "Sun Strength": "150%", "Description": "Scale plate green is a huge space cluster of factories and stations, far away from main Terran bases, it is next to a Xenon sector, and therefore, constantly under attack most of the missions here are escort and fighting, a perfect place for mercenaries who aren't afraid of being in a 4 cruiser battle crossfire, even though the Xenon presence here is really notorious, there are also frequent Kha'ak attacks, you can get high priced patrol contracts from different Terran and Teladi starships.", "Name": "Scale Plate Green", "Sector Size": "60 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "77,693,666", "Planets": "3", "Sun Strength": "150%", "Description": "This system is the property of the Rhonkar Family, one of the dominant Split clans. Although this system was not always their property, it was seized during the last civil war with the Patriarch of all Split. Success here is ensured by slave labour, illegal mining methods and ruthless workforce control, but this is not a matter that concerns the average Split.", "Name": "Family Rhonkar", "Sector Size": "120 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "Unknown", "Planets": "1", "Sun Strength": "100%", "Description": "Previously an unknown sector, in Albion Prelude, this sector is claimed by the desperate Split and becomes known as Zyarth's Stand.", "Name": "Zyarth's Stand", "Sector Size": "90 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "18,881,847", "Planets": "1", "Sun Strength": "150%", "Description": "Savaged by conflict and greed, this sector remains turmoils. Internal power-struggles between pirate factions leave any entry to this sector one of great risk. Paranid attempts to cleanse this sector are frequent and forcefull.", "Name": "Desecrated Skies", "Sector Size": "80 km", "Race": "Pirates", "Security Level": "Border"},
+{"Population": "93,370,666", "Planets": "5", "Sun Strength": "100%", "Description": "On the border of Argon and Boron space, the populated planets of this system are a popular vacation destination for Argon high society seeking safe, cosmopolitan surroundings. The very best in Argon cuisine is made in this system. The Equipment Dock provides a wide choice of weapons and upgrades for combat ships and pleasure-cruisers alike.", "Name": "Three Worlds", "Sector Size": "70 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "91,880,102", "Planets": "3", "Sun Strength": "150%", "Description": "The pride of the local Teladi sectors is this colony; the high tower of the Ministry of Finance stands high on the planet's surface. The Ministry was set up to oversee the Compagny's finances when setting up new sectors, although this wing of the Teladi Compagny wasn't entirely successful. When the neighbouring system, Bad Debt, was first opened to the public, the sector ran into troubleand the Ministry was held responsible. The colony skyline is dominated by the 80 story tower that casts a shadow over the gardens of trade, a large garden filled with markets and made more appealing to visiting Argon and Boron traders.", "Name": "Ministry of Finance", "Sector Size": "150 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "16,905,427", "Planets": "2", "Sun Strength": "150%", "Description": "To fly across the rings of Saturn, to know its beauty and splendour, to gaze upon such timeless grace, to do all these things is to finally accept your home amongst the stars. It remains a rite of passage for those wishing to gain true understanding of the journey taken.", "Name": "Saturn", "Sector Size": "150 km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "94,105,857", "Planets": "3", "Sun Strength": "150%", "Description": "When the Paranid first entered this system they found an empty sector accessible by two gates, but the planet remains a mystery here. There are a few remnants of a civilization with one relic - a needle-like object made from stone that stands 3 stories high, in the middle of what may have been a city. At the foot of the monument a large gemstone was found inside a carved stone case. After prolonged surveys it was discovered that there was one once a large building here, which was thought to be a temple. Scientists today are still trying to understand what the script on the needle object means.", "Name": "Sacred Relic", "Sector Size": "130 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "89,204,714", "Planets": "2", "Sun Strength": "150%", "Description": "This newly discovered system shows that the Xenon are still concern; the sector houses a secondary production facility for Xenon vessels and is home of a large defense force. Some speculate that a Xenon core system is nearby.", "Name": "Xenon Sector 598", "Sector Size": "80 km", "Race": "Xenon", "Security Level": "Border"},
+{"Population": "94,581,329", "Planets": "2", "Sun Strength": "100%", "Description": "This busy Boron mining colony doubles as a refit and supply centre for Boron ships working the new colonies. Harsh conditions and pirate raids make the Boron who dwell here harder and more cynical than their compatriots nearer the Boron home systems.", "Name": "Great Trench", "Sector Size": "85 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "8,690,046", "Planets": "1", "Sun Strength": "150%", "Description": "Although this system is primarily concerned with agricultural production, the factories in this system make it a prime target for raiding or sabotage. The stormy ringed planet that dominates this system is currently being terraformed by the Paranid for inhabitation in the near future.", "Name": "Priest Rings", "Sector Size": "45 km", "Race": "Paranid", "Security Level": "Core"},
+{"Population": "86,709,952", "Planets": "1", "Sun Strength": "150%", "Description": "Once a haven for the Queen herself, Menelaus no longer retreats here in time of trouble. Conflict in nearby sector has borne a wealth of agriculture, high-tech goods and military hardware needed to supply the war front.", "Name": "Menelaus's Oasis", "Sector Size": "80 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "23,939,282", "Planets": "3", "Sun Strength": "100%", "Description": "This system was originally empty with few asteroids creating a barrier near the gate. this was until the Boron moved the gate away from the vein asteroids. Barren Shores today has become a thriving trade colony with exports being high. Whether hgh-tech goods available at this time is unknown.", "Name": "Barren Shores", "Sector Size": "100 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "43,299,833", "Planets": "3", "Sun Strength": "150%", "Description": "This sector holds a major settlement recently set up by the Boron, a construction colony base on ship production. The system is named for the nebula that is located nearby. The colony itself has facilities for both families and the military, with municipal recreation domes containing restaurants, water-parks and marinas.", "Name": "Great Reef", "Sector Size": "60 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "86,700,400", "Planets": "3", "Sun Strength": "150%", "Description": "This system supplies most of the weaponry used by the Boron Military in their sporadic battles against the Split, in addition to the defense of their systems from Pirate and Xenon raiders. As it is the main supply and outfitting depot for the Boron space fleet, it is a prime target for Split attacks should hostilities resume between the two species.", "Name": "Rolk's Fate", "Sector Size": "75 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "20,384,544", "Planets": "2", "Sun Strength": "150%", "Description": "There is no data on this sector save that it contains a huge watery planet known bu the Boron as 'Saa-Russ' of 'Life of the Sea' which legend insisits in inhabited by giant sea dragons. Many ships have set out to explore this system, though very few have returned.", "Name": "Xenon Sector 347", "Sector Size": "80 km", "Race": "Xenon", "Security Level": "Border"},
+{"Population": "80,663,427", "Planets": "1", "Sun Strength": "150%", "Description": "With most of the Paranid now in space-borne colonies, the high priest of the Paranid chose to seek a new Cardinal to set up his religious sections in the new Dutchy Systems. This setor is now home to the Cardinal who chose this sector for the capital of the Second Dutchy. The system boasts shipyard facilities, and equipment dock, as well as being guarded by a Destroyer ship, mainly for protection from the Pirates from past the north gate.", "Name": "Cardinal's Domain", "Sector Size": "70 km", "Race": "Paranid", "Security Level": "Core"},
+{"Population": "70,868,743", "Planets": "2", "Sun Strength": "150%", "Description": "This system is rumoured to have a hidden gate leading to a Boron military facility. If you enter this system, there is a great possibility that the local military police force will scan your ship; if you have hostile intentions you will be attacked. It is this tightened security that has led to these rumours. The sector itself is a small trade outpost with little need for high tech goods.", "Name": "Dark Waters", "Sector Size": "110 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "99,093,573", "Planets": "3", "Sun Strength": "100%", "Description": "The Split secured this mineral rich system from the Xenon rearguard early after the last Xenon conflict but sustained heavy losses doing so. It now exists as a welcome, if rough, trading post on a busy route between many species' systems. Few communities hate the Xenon more than the inhabitants of the system.", "Name": "Cho's Defeat", "Sector Size": "60 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "52,711,109", "Planets": "1", "Sun Strength": "150%", "Description": "The furthest Federation outpost from Argon Prime, this dangerous system is both a deep-space resupply point and military tracking station. Xenon activity in this system is carefully monitored by a covert Federation branch who are rumoured to have an inaccessible base hidden near the storm-battered planet 'Hades'.", "Name": "Black Hole Sun", "Sector Size": "65 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "39,572,202", "Planets": "1", "Sun Strength": "150%", "Description": "This bleak region is home to the Yaki faction. Little else is known about this sector.", "Name": "Ocracoke's Storm", "Sector Size": "40 km", "Race": "Yaki", "Security Level": "Border"},
+{"Population": "4,030,657", "Planets": "1", "Sun Strength": "100%", "Description": "The border of Teladi and Split space in this part of the universe is located in this system.Trade between the Teladi and Split Families T'kr and Njy usually takes place in this oddly designed system. Arranged by the Paranid sector designed, Almanckessat, this system's arrangement is thought to bring forth good fortune, to which the Paranid claim a great deal of in the name of their empire, much to the chagrin of the Teladi, whom Home of Opportunity is the capital of their local sectors.", "Name": "Home of Opportunity", "Sector Size": "60 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "60,569,659", "Planets": "1", "Sun Strength": "150%", "Description": "Caught between the expansion of both races, the Paranid hold this sector while facing continual incursions from the Argon. It serves as a place of rest for those known as The Fallen, priests who have lost their way amongst the stars. Redemption comes to all, in time.", "Name": "Third Redemption", "Sector Size": "80 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "93,949,494", "Planets": "1", "Sun Strength": "150%", "Description": "The Boron have established this sector to take advantage of the resources needed to growth of military and technological industry and nearby sectors. Agricultural and mineral output is both secure and of considerable volume.", "Name": "Hollow Infinity", "Sector Size": "80 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "43,289", "Planets": "1", "Sun Strength": "150%", "Description": "With Albion's latent mineral wealth, it was no supprise to see several mining corporations clamouring for mining rights. Pltarch Mining Corporation became the front-runner in the contest with their vast funds and readily available fleet of ships. Essentially becoming partners with Jonferco in the Albion endeavour, Plutarch was to showcase the Highway project as a vision of the future, improving both social and economic aspects for any system in which they are installed. The Highway research and technology itself has been withheld form Plutarch, much to the dismay of it's top officials.", "Name": "Albion Delta", "Sector Size": "80 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "1,968,211", "Planets": "3", "Sun Strength": "150%", "Description": "This system manufactures hardware for the refit yards in Emperor's Ridge. It also provides masses of mineral and organic products to be consumed by their crews. Despite a heavy security around the military installations, the Space Jewellery workshop provides rich pickings for the more aggressive and desperate looters and pirates based in nearby systems.", "Name": "Priest's Pity", "Sector Size": "90 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "88,121,629", "Planets": "2", "Sun Strength": "150%", "Description": "A highly defended system, for reasons that only the Teladi and few other know about. Shareholders Fortuneis is a new sector developed around a small field of large asteroids. The Teladi believed that this system would provide them with a source of Nividium, a rare material found in only some parts of the universe. After they found out their research ship was incorrect in this assumption the Telai had to turn to building new factories for high-demand technologies.", "Name": "Shareholder's Fortune", "Sector Size": "110 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "93,279,872", "Planets": "0", "Sun Strength": "300%", "Description": "Many believed Aldrin to be lost if not completely destroyed centuries ago. Now, the \"Lost Colony\", recovered from the void of space, is home to those who have made good use of surviving terraformer ships, still benevolent from their isolation. Their offering of secrets long-forgotten gives hope for the continued survival of all races.", "Name": "Aldrin", "Sector Size": "600 km", "Race": "Terran", "Security Level": "Border"},
+{"Population": "93,422,880", "Planets": "3", "Sun Strength": "150%", "Description": "This system provides much needed power and food to the Argon Military as well as providing a convenient temporary HQ for the rapid response squads set up against Pirate activity and Xenon insurgence. It is often used as a base to recharge long range recon ships and carriers and as a result is well defended and often dangerous system during times of conflict.", "Name": "The Wall", "Sector Size": "80 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "75,564,278", "Planets": "3", "Sun Strength": "100%", "Description": "This asteroid scattered system provides much of the organic supplies required by the 'New Boron Colonies'. Many of the ships used in building and servicing the surrounding Boron systems are built here.", "Name": "Lucky Planets", "Sector Size": "60 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "47,164,367", "Planets": "4", "Sun Strength": "150%", "Description": "The factory and refinery workers of Profit Share are renowned for working hard - and partying even harder. The Bliss Place can be rough at a cycle's end - on refinery pay-day when the dice are loaded and the stakes are high, tempers can get frayed. The smokeshacks and speakeasies of Profit Share are commonly frequented by the more colorful Pirate crews.", "Name": "Profit Share", "Sector Size": "80 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "56,383,737", "Planets": "3", "Sun Strength": "150%", "Description": "A relatively safe system, ideal for short trading runs and a debut in factory ownership. The Sun Oil Refineries in this system and more in the surrounding systems are reliant on imported Sunrise Flowers - making this an ideal location for a Solar Power Plant and Dream Farm.", "Name": "Greater Profit", "Sector Size": "55 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "4,876,545", "Planets": "1", "Sun Strength": "150%", "Description": "This outpost of basic installations acts as a resupply point for all Federation ships in the area. It produces only the basic products most required by small ships and installations. The system is the spiritual home of the popular Argon sport known as 'Hardball'.", "Name": "Ringo Moon", "Sector Size": "80 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "44,797,943", "Planets": "1", "Sun Strength": "150%", "Description": "This highly agricultural system provides much of the Soja Beans that form the basis of the Paranid diet. The highly ionized water of the system's planet contains rare organic minerals that greatly improve the flavor of Beans nurtured in it. This system suffered particularly heavy losses in the last Xenon conflict.", "Name": "Duke's Domain", "Sector Size": "40 km", "Race": "Paranid", "Security Level": "Core"},
+{"Population": "54,669,207", "Planets": "3", "Sun Strength": "150%", "Description": "This agricultural system is run by the brutally efficient Njy family. It produces many Split foodstuffs that are shipped to the two planets in this system and neighbouring systems. The Njy family is particularly brutal, offensive and arrogant, even by Split standards.", "Name": "Family Njy", "Sector Size": "70 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "61,829,471", "Planets": "1", "Sun Strength": "150%", "Description": "Originally deemed to be impossible to settle due to deeply drifting nebulae, The Shallows remained largely unpopulated. With recent solar flares having helped to clear the nebulae, building has continued at greater depths. Both Split and Boron forces currently contest this area, both eager to regain lost ground.", "Name": "The Shallows", "Sector Size": "80 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "49,540,572", "Planets": "3", "Sun Strength": "150%", "Description": "This lawless system is the hub of the black market in food and low-tech industrial produce. Many unscrupulous merchants have made a fortune trading illicit goods. Many, many more have been ripped off, ambushed, swindled, bushwacked, conned, assaulted, hijacked, stranded, killed or worse.", "Name": "Danna's Chance", "Sector Size": "40 km", "Race": "Pirate", "Security Level": "Border"},
+{"Population": "94,869,909", "Planets": "4", "Sun Strength": "100%", "Description": "The name is deceiving, but there is a meaning. The sector is located close to the Ma'kare star; the dominating feature is the flare that streams though the system. Because the stations are located so close to the star, all stations were fitted with a new reflective Teladianium armour that allow for the flares to hit the station and only affect it slightly. Although the shields do protect the stations by absorbing 80 percent of the energy, the rest is reflected back by the armour. The name come from the High Priest, who visited this sector shortly after discovery. Back then the flare was still at a distance, so the sector was a void. Many religious Paranid thought that the star that was drawing closer was an omen and so many preachers came to see this, hence the name.", "Name": "Preacher's Void", "Sector Size": "60 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "16,616,837", "Planets": "2", "Sun Strength": "150%", "Description": "This deep space system is about as close as the Split get to a civilian operation. It produces food and other organic products and mines the asteroids that are spread throughout the system. Although there is little military presence all Split are required to complete combat training and civilian Split pilots are no easy target.", "Name": "Thyn's Abyss", "Sector Size": "70 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "72,940,042", "Planets": "4", "Sun Strength": "100%", "Description": "This strange system is named for a goner belief that Nathan R Gunne once visited this system, the reason for this belief is that when first entered, a piece of debirs was found, after an investigation it was foundyo be from two ancient fleets. All the debris has been cleared up and a new system has been forged in the brown nitrogen dioxide nebula streams of the system. Pirate activity is also increased and has meant increased military patrols in this system. many pilots tend to avoid the gas clouds, as pirate ships have been known to hide in the nebulae and then participate in surprise attacks. The local population are made of mixed labour level, from high tech support to miners.", "Name": "Nathan's Voyage", "Sector Size": "70 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "54,736,607", "Planets": "2", "Sun Strength": "150%", "Description": "On the border between Teladi and Boron space, this system acts as a major commercial centre for trade between the Foundation and Profit Guilds, as well as providing large amounts of raw mineral resources. Although the Split rarely deign to trade with the Boron, both races trade with the Teladi. Much of this business between the feuding species occurs behind closed doors in this sector - all to the greater profit of the Teladi, of course.", "Name": "Ceo's Buckzoid", "Sector Size": "70 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "70,587,038", "Planets": "2", "Sun Strength": "100%", "Description": "The Boron sector of Shining Currents was founded as a food production centre to aid the continuing growth of the Boron Kingdom. The name comes from the reflexion of the mercury ocean on the moon of the primary planet.", "Name": "Shining Currents", "Sector Size": "135 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "80,020,728", "Planets": "3", "Sun Strength": "150%", "Description": "Interworlds is so called beacause of its strange arrangement of planets; two planets inhabit the system and create a bottleneck with the jump gate route. The entire system was only accessible via one lone gate when first discovered. Originally an agricultural colony built by the Argon to supply food supllies to rest of Argon Federation, Interworlds has expanded to include more high tech stations and products. It is also home to the 4th Argon Expeditionary Force, which is still looking for any new gate routes that can be used.", "Name": "Interworlds", "Sector Size": "60 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "91,543,285", "Planets": "2", "Sun Strength": "150%", "Description": "This sector lies in low orbit of the hostile planet Xhar'Bar, where the Xaarist priests accused earl colonists of not following the Paranid religion.", "Name": "Unholy Descent", "Sector Size": "80 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "44,387,634", "Planets": "3", "Sun Strength": "150%", "Description": "This sector was established shortly after the initial Kha'ak invasions, and was intended as support sector for supplying food and minerals to other Argon colonies.", "Name": "Belt of Aguilar", "Sector Size": "70 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "60,874,549", "Planets": "2", "Sun Strength": "150%", "Description": "This sector is home of the disgraced family T'kr, who were held responsible for a tragic incident that destroyed a Split shipyard and killed five hundred Split. What stopped this family from losing all of its assets was the then Patriarch of All Split, using T'kr as a sign to all Split that such incidents will not be tolerated. Now the sector is home to all of the family's assets, and it hs been only in recent years the the sector has been visited by other families for trade. The sector also makrs the border for the Teladi 'fortune' system block, sectors that the Teladi use for production, also containing the stations that T'kr use as their main source of trade. The family's only destroyer patrols the system.", "Name": "Family Tkr", "Sector Size": "80 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "43,834,285", "Planets": "2", "Sun Strength": "150%", "Description": "This sector began life with relative peace, both sides shring resources equally. Open conflict between the Split and the Boron soon changed that. now a mire of lawlessness, the Boron no longer have the resources needed to engage both Pirate and Split forces.", "Name": "Veil of Delusion", "Sector Size": "80 km", "Race": "Pirates", "Security Level": "Border"},
+{"Population": "8,754,315", "Planets": "3", "Sun Strength": "150%", "Description": "Thuruk's Pride produces a lot of the complex computers and hardware required by Split warships. Plentiful and cheap energy, and a variety of natural raw materials make this system a lucrative high-tech manufacturing center. Split and Paranid technology are combined in this sector to produce efficient and powerful beam weapons.", "Name": "Thuruk's Pride", "Sector Size": "90 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "33,976,759", "Planets": "3", "Sun Strength": "150%", "Description": "The Argon mine workers in this mineral rich system are famed across space for their ability to consume vast quantities of Space Fuel. Their semi-legal bootlegging operation keeps the miners happy and the bosses rich. Strong liquor loosens tongues and the system is a hive of gossip, rumour and dubious scuttlebuzz.", "Name": "Herron's Nebula", "Sector Size": "100 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "54,215,855", "Planets": "2", "Sun Strength": "300%", "Description": "This sector was once a quiet area, in which the only feature was the deactivated jumpgate drifting lifelessly in orbit around the planet Armstrong. With the growing Terran interest in the jumpgate, this area of space quickly transformed into a thriving hub where technology and knowledge are traded between the two peoples.", "Name": "Aldrin 2", "Sector Size": "60 km", "Race": "Terran", "Security Level": "Border"},
+{"Population": "28,660,785", "Planets": "4", "Sun Strength": "150%", "Description": "This system is home to the NMMC corporation, formerly known as PTNI. This corporation controls the supply of the rare material Nividium and has recently reformed its policies in an attempt to downplay accusations of illegal activity. The sector name has remained unchanged for historical reasons. Its factories produce high-quality weapons for the Teladi as well as other general resources for the two planets in this sector. The system is guarded by the NMMC's security arm as well as Teladi Company ships.", "Name": "PTNI Headquarters", "Sector Size": "55 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "20,223,166", "Planets": "1", "Sun Strength": "100%", "Description": "The Teladi marked this sector as a hub for all commerce involving mining and food production. Choosing not to invest too far too soon, further sector discoveries were sold to the Boron, gaining further profit from the trade lane created. Tears of Greed was born upon the countless Teladi who had invested heavily on further sector development, their only choice to return to their homeworlds broken and ban krupt.", "Name": "Tears of Greed", "Sector Size": "80 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "2,904,506", "Planets": "1", "Sun Strength": "150%", "Description": "Formed shortly after the claiming of the sector to the south, this sector was set up originally as a monastery. It provided a place for passing priests to pray and hold quiet meditation. Military forces were virtually non-existent during early settlement, leaving the monastery open to attack by raiding parties from the nearby Pirate sectors. The priests held their position in the safety of the temple caverns for several days before the Paranid managed to send a destroyer to protect its holy populace. The destroyer has now moved to the next sector to prevent such incursions into Paranid territory.", "Name": "Priest Refuge", "Sector Size": "150 km", "Race": "Paranid", "Security Level": "Border"},
+{"Population": "50,512,134", "Planets": "1", "Sun Strength": "150%", "Description": "In Pluto lie the beginnings of the Kuiper Belt. Once thought of as being one of Sol's home planets, it has long since been orphaned and discarded to the uneasy drift of Kuiper's reign. Central Control for both Kuiper and Oort mining are based here, alongside the Military Base of Operations for the outer zones.", "Name": "Pluto", "Sector Size": "120 km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "Unknown", "Planets": "2", "Sun Strength": "100%", "Description": "Ex-racing pilot and wealthy entrepreneur, Ser Alman Jonferson used some of his vast financial fortune to help sponsor construction on one of the largest and most prestigious racing circuits available. Its proximity to the lawless pirate sectors does however make security in this sector an issue. Race events held here do make for some of the most interesting races in the league calendar.", "Name": "Freedom's Reach", "Sector Size": "60 km", "Race": "Unknown", "Security Level": "Border"},
+{"Population": "92,110,772", "Planets": "3", "Sun Strength": "150%", "Description": "Founded to prevent the Boron expanding further in this area of space, this Split colony is heavily guarded and produces surveillance equipment and defensive weapons, allegedly for protection against Boron aggression. A covert Federation intelligence group in turn watch the Split for signs of aggression against the peace loving Boron.", "Name": "Ghinn's Escape", "Sector Size": "45 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "89,569,635", "Planets": "1", "Sun Strength": "100%", "Description": "The eternal story, of growth and development, profit and expansion; all of these things are the very essence of Teladi commerce. This Core sector specialises in high-tech goods and energy production. There are rumours that the story does not end within this region. Many will attest to the Teladi proverd that there is profit in exploration.", "Name": "Homily of Perpetuity", "Sector Size": "80 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "49,340,890", "Planets": "1", "Sun Strength": "150%", "Description": "The RBMD or Royal Boron Military Defense, system 'Depths of Silence', was formed to build new ships and develop new technologies. This system is heavily guarded in case of attack by Xenon or other forces hostile to the Boron Navy. The sector is filled with high-tech Boron Stations, including those that specialise in the production of new Boron weapons systems. Entrance to this system is granted if you're carrying cargo to this system, or if you have previous access rights.", "Name": "Depths of Silence", "Sector Size": "80 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "100,567", "Planets": "1", "Sun Strength": "150%", "Description": "Located in a vast, dense ring of debris, the Albion system quickly attracted significant interest from several mining corporations and Jonferson Space Dynamics Division. After heavy mining depleted the most easily accessible resources, Jonferco began to change the face of Albion with their Highway project. Highways promise to create a network of fast travel lanes throughout the entire system. Still under construction, until these devices are opterational the gapes between developed regions are linked by Trans-Orbital Accelerators. As the gateway to the Albion system, this sector is heavily patrolled by Jonferco, Plutarch and Argon vessels.", "Name": "Albion Gamma", "Sector Size": "100 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "27,130,470", "Planets": "2", "Sun Strength": "100%", "Description": "After establishing their primary system to the anger of the Ryk family, the Zyarth patriarch gained the friendship of the Njy family and secured resources to establish their second system. Zyarth's Dominion was formed bordering a dangerous Xenon system.", "Name": "Zyarth's Dominion", "Sector Size": "200 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "89,875,207", "Planets": "2", "Sun Strength": "100%", "Description": "Merchant Haven was established to be a major trade port for the new Teladi expansion campaign. However the plans failed when surprise attacks by hostile forces stopped the advance into nearby systems. The sector serves the local Teladi population and trades with the nearby Argon and Split.", "Name": "Merchant Haven", "Sector Size": "60 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "43,998,271", "Planets": "2", "Sun Strength": "150%", "Description": "Omycron Lyrae remains true to the courage and conviction of those who knew that this sector would not be the last will and testament to the battle fought against the Kha'ak. Here lie the souls of those not forgotten, those who understood that this would be the point at which all races would stand tall and take the battle onwards. Those remaining here are neither forsaken nor left without hope. Life goes on, while in the shadows lurk the destroyers of worlds.", "Name": "Omicron Lyrae", "Sector Size": "55 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "90,495,195", "Planets": "2", "Sun Strength": "150%", "Description": "In striking out in the growing conflict with the Split, Menelaus established this sector to be the first in the new colonies. A Core sector, specialising in technological and military output, hell hath no fury greater than a Queen's retribution.", "Name": "Queen's Retribution", "Sector Size": "80 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "15,716,828", "Planets": "2", "Sun Strength": "150%", "Description": "The leader of the Split family Rhy discovered and occupied this sector shortly after the Kha'ak invasions began. The sector was supposedly taken from the Kha'ak by the Rhy Family in an unconfirmed story.", "Name": "Rhy's Crusade", "Sector Size": "60 km", "Race": "Split", "Security Level": "Core"},
+{"Population": "84,115,749", "Planets": "3", "Sun Strength": "150%", "Description": "Situated between two uninhabitable dust planets this relatively new Teladi system produces raw materials as well as light weapons for military and exploration ships. This system is earmarked by the Profit Guild for priority expansion and investment.", "Name": "Profit Center Alpha", "Sector Size": "110 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "53,816,004", "Planets": "3", "Sun Strength": "150%", "Description": "This system serves as the source of ships and equipment for the Argon settlement areas of space recently claimed after the Xenon conflict. The majority of traffic here is comprised of Argon scout ships and transports headed from newly founded colonies and the fringe systems.", "Name": "Light of Heart", "Sector Size": "120 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "16,978,124", "Planets": "3", "Sun Strength": "150%", "Description": "On the Split-Teladi border, this sector is the focal point for much of the limited trade between the Split and other species. The two Teladi systems between Family Whi and the nearest Boron system provide a buffer between the two feuding species. It is usual, however, to find Split on guard against the unlikely threat of a Boron sneak attack.", "Name": "Family Whi", "Sector Size": "80 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "", "Name": "Saturn 3", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "20,675,064", "Planets": "2", "Sun Strength": "150%", "Description": "Once the favoured retreat of Boron philosophers and visionaries, this sector is now managed by the Teladi and has become the preferred destination of fun seekers, weedheads and space-hippies of every race. The Bliss Place in the centre of the sector produces the narcotic Space Weed, the meditative drug of choice for the dreamers, artists and neo-philosophers that are drawn here.", "Name": "Teladi Gain", "Sector Size": "90 km", "Race": "Teladi", "Security Level": "Core"},
+{"Population": "32,065,101", "Planets": "2", "Sun Strength": "150%", "Description": "Situated in a heavy asteroid belt forbidding Split mining colony has grown into the second capital system of Split space. It is a successful trading location as well as providing much needed support for Split military ships. Run by the relatively liberal Thi Family, this is the only Split system not using forced labour in its factories.", "Name": "Patriarch's Keep", "Sector Size": "50 km", "Race": "Split", "Security Level": "Border"},
+{"Population": "61,872,072", "Planets": "1", "Sun Strength": "150%", "Description": "Beware the East gate, as it lies almost within the edge of the planet's atmosphere. Passing it will cause continuous, low-level damage.", "Name": "Split Fire", "Sector Size": "60 km", "Race": "Pirate", "Security Level": "Border"},
+{"Population": "27,637,444", "Planets": "2", "Sun Strength": "100%", "Description": "The Teladi claimed this system with the sole intention of colonising the two massive planets here. The awful fate of the first scouting parties to the planets' surfaces and the discovery of the hostile nature of the indigenous life forms dwelling there have ended such plans and and the system is slowly decaying into a place of fear, lawlessness and anarchy.", "Name": "New Income", "Sector Size": "100 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "In past times, Earth's moon was little more than a glimmer of the dreams held within those who gazed upon it. The cratered surface now glittering with countless refineries and bases, few will ever remember it as being anything more than a stepping stone to the stars.", "Name": "The Moon", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "126,572", "Planets": "1", "Sun Strength": "120%", "Description": "Discovered during recent exploration, Albion was identified by JSDD as one of several sectors in the running to be their new Headquarters, where they could conduct research into more advanced and potentially unstable technologay away from stringent Argon oversight and without placing innocent lives at risk. Following the deployment of several Jonferco-built Trans-Orbital Accelerators, the sector was rechristened Albion Alpha, and for undisclosed reasons the gate was towed to the region now known as Albion Gamma. the sector now houses a mixture of high-tech facilities and mies. A further facility also resides within this sector; however little information is available due to hightly restricted access. This has fueled numerous rumours about this station's purpose, the most widespread being that potentially-illegal AI research is conducted there with the knowledge and consent of the Argon government.", "Name": "Albion Alpha", "Sector Size": "100 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "56,715,601", "Planets": "2", "Sun Strength": "150%", "Description": "Senator's Badlands is home to the Yaki's only Shipyard. It is guarded by a large number of fighters, and is usually patrolled by an Akuma.", "Name": "Senator's Badlands", "Sector Size": "90 km", "Race": "Yaki", "Security Level": "Border"},
+{"Population": "34,208,808", "Planets": "3", "Sun Strength": "100%", "Description": "Unmarked on all public-access navigational systems, until recently this sector simply did not exist. Rumours were ruthlessly quashed until Legend's Home was ready to be born; and so until then, OTAS perfected their military and technological might in secret. Their Core sector is now open, heavily defended, and still deeply engaged in Research and Development. Tread lightly.", "Name": "Legend's Home", "Sector Size": "70 km", "Race": "Argon", "Security Level": "Core"},
+{"Population": "97,223,325", "Planets": "1", "Sun Strength": "150%", "Description": "Benefiting from both the protection of the nearby Pirate Base, as well as business in the more illicit of wares, Bright Profit strikes a fine balance between conflict and trade. Skirmishes are rare, and usually due to intoxication of one kind or another.", "Name": "Bright Profit", "Sector Size": "80 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "79,279,621", "Planets": "4", "Sun Strength": "150%", "Description": "The planet Elysium is described as a peaceful paradise world filled with lush plant life. The lowlands, however, are filled with a thick mist for half of the planet's day. This does not seem to worry the Boron, who remain at some distance within their deep-sea homes.", "Name": "Mists of Elysium", "Sector Size": "200 km", "Race": "Boron", "Security Level": "Border"},
+{"Population": "", "Planets": "", "Sun Strength": "150%", "Description": "", "Name": "Kuiper Belt", "Sector Size": "km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "14,967,608", "Planets": "1", "Sun Strength": "100%", "Description": "Discovered while exploring Getsu Fune, this sector was cleared of Xenon by a small force of ships. Unfortunately, soon after this mission was completed the Argon Destroyer was ambushed. Its Captain's last report stated that the Xenon entered the sector from an unexplored gate, the position of which was not recorded. The Destroyer was never heard from again. The sector has rarely been entered since and is considered by the Argon to be somewhat cursed in its nature.", "Name": "Xenon Sector 534", "Sector Size": "110 km", "Race": "Xenon", "Security Level": "Border"},
+{"Population": "37,456,368", "Planets": "1", "Sun Strength": "150%", "Description": "Specialising in food and power storage technology, Queen's Harbour offers a wide array of wares. It is used as a re-supply point for many major passenger transports, and on occasion, the Queen's own personal carrier.", "Name": "Queen's Harbour", "Sector Size": "80 km", "Race": "Boron", "Security Level": "Core"},
+{"Population": "147,285", "Planets": "0", "Sun Strength": "150%", "Description": "Deemed to be viable Class IV mining operation by long-range scout vessels en-route to Proxima Centauri, the Oort Cloud remains largely untouched. Halfway between home and distant suns, few willingly choose to settle here. Those who do are often to succumb to Oort's Curse, a madness with no reason or cure.", "Name": "Oort Cloud", "Sector Size": "80 km", "Race": "Terran", "Security Level": "Core"},
+{"Population": "64,584,524", "Planets": "3", "Sun Strength": "150%", "Description": "Established at the same time as 'New Income', this well organised Teladi system supports most of the ships travelling through newly colonised Teladi space. The inhospitable, rocky moon of the fringes of this system is used as a survival training ground for Teladi Profit-Protection troops.", "Name": "Two Grand", "Sector Size": "140 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "52,136,472", "Planets": "0", "Sun Strength": "150%", "Description": "A known haven for pirate forces, the sector was recently discovered after an attack in Montalaar lead Argon security forces to their jump-point. The Argon continue to deploy forces in an effort to take this sector once and for all. Many believe the battle will last far longer than the Argon are willing to admit.", "Name": "Gunne's Crusade", "Sector Size": "80 km", "Race": "Pirate", "Security Level": "Border"},
+{"Population": "14,878,981", "Planets": "4", "Sun Strength": "150%", "Description": "This system is typical of small scale Teladi trading outposts. It produces Teladi specialty goods as well as traditional foodstuffs both for local and export markets. The Teladi merchants here trade mainly with the Boron living in neighbouring space but naturally they welcome any visitor with credit to spare.", "Name": "Ceo's Doubt", "Sector Size": "60 km", "Race": "Teladi", "Security Level": "Border"},
+{"Population": "84,218,454", "Planets": "2", "Sun Strength": "150%", "Description": "Sometime before the last Xenon conflict, the planet 'Shipfall' was blown apart by a mysterious disaster of awesome magnitude. The shock wave eradicated all installations in this area - at the time a thriving Argon industrial colony. Some effort has been made to re-establish the colony since, but its activities are currently restricted mainly to mining and agriculture.", "Name": "Power Circle", "Sector Size": "70 km", "Race": "Argon", "Security Level": "Border"},
+{"Population": "54,191,394", "Planets": "2", "Sun Strength": "150%", "Description": "Once owned by the T'kr Family, this was a hub of activity. Mining was the main job here, but after the Dragon Incident this sector was seized by the neighbouring Njy family under orders from the Patriarch of all Split. Now the sector has run into disrepair, new stations have been built but are poorly maintained, pirate activity has increased and remnants of a minefield placed by T'kr to stop seizure of the system can be found hidden in nebula streams. Pilot are asked to take caution in this system, as these mines could still be operational.", "Name": "Tkr's Deprivation", "Sector Size": "100 km", "Race": "Split", "Security Level": "Border"},
+{"Name": "Mines of Fortune", "Planets": "2", "Population": "42,079,263", "Security Level": "Border", "Race": "Teladi", "Sector Size": "80 km", "Sun Strength": "150%", "Description": "When the Teladi Mining Executive came across this system, they sent several of their Explorer Ships to evaluate the system's resources. One of the ships, the Mercantile, came across abandoned space station set into some of the mineral rich asteroids. The technology seemed to be similar to the Argon, however they denied ever having held a presence there. The neighbouring system already belonged to the Teladi, so they quickly moved in, re-aligning the gates with the standard navigation system, near to the alien mines. After retrofitting the stations with Teladi technology, the largest Teladi mining operation in history opened for business."},
+{"Name": "Menelaus's Frontier", "Planets": "5", "Population": "21,092,133", "Security Level": "Core", "Race": "Boron", "Sector Size": "100 km", "Sun Strength": "150%", "Description": "The Boron and Teladi trade amicably in this peaceful sector. As with all Boron sectors, the economy is heavily reliant on agriculture and imported raw materials. The beguiling organic shapes of Boron Space Trading Stations are a constant reminder of their aquatic origins."},
+{"Name": "Cloudbase Southeast", "Planets": "2", "Population": "61,298,133", "Security Level": "Border", "Race": "Argon", "Sector Size": "40 km", "Sun Strength": "150%", "Description": "This quiet and unassuming system is a resupply point for the Argon military. Hostile activity is generally minimal as it is well guarded by security patrols. The Space Equipment Dock is a useful source of surplus military equipment as well as second hand kit used by the many Argon Military training outposts in the area."},
+{"Name": "Mi Ton's Refuge", "Planets": "4", "Population": "57,705,051", "Security Level": "Border", "Race": "Pirates", "Sector Size": "180 km", "Sun Strength": "100%", "Description": "This sector was worthless to other races, inaccessible by other races because of the minefield in the sector to the north. This sector was originally a boron reserch sector, and with a handful of stations this colony was working one. When the colony plans for LooManckStrat's Legacy fell though after a pirate attack, this colony had to be abandoned. Some stations were scuttled while others were later reactivated by pirate forces who have now laid claim this system."},
+{"Name": "Cloudbase Northwest", "Planets": "3", "Population": "71,568,475", "Security Level": "Border", "Race": "Argon", "Sector Size": "65 km", "Sun Strength": "150%", "Description": "This system is sparsely populated, dedicated purely to the production of raw materials and food for installations in the surrounding systems. The presence of weapons production facilities requires heavy protection by Federation ships against sabotage attacks from Pirates seeking to weaken Argon defenses."},
+{"Name": "Mercury", "Planets": "", "Population": "", "Security Level": "Core", "Race": "Terran", "Sector Size": "km", "Sun Strength": "150%", "Description": "Aldrin | Aldrin 2 | Heretic's End | Terran Unknown Sector 1 (Megnir) | Terran Unknown Sector 2 (Althes) | Terran Unknown Sector 3 (Segaris) | Unknown Sector (7,4) | Unknown Sector (8,4) | Unknown Sector (8,5) | Unknown Sector (7,5)"},
+{"Name": "Pontifex's Realm", "Planets": "3", "Population": "39,428,152", "Security Level": "Border", "Race": "Paranid", "Sector Size": "80 km", "Sun Strength": "150%", "Description": "Despite fanciful miners' tales that the asteroids in this system are all made of solid Nvidium they seems to be rich in only the more mundane ore and silicon. The two factories producing cheap, commercial jewellery for the export market are well defended against opportunistic attack but attract the occasional raids from determined freeloaders."},
+{"Name": "Cloudbase Southwest", "Planets": "2", "Population": "67,142,330", "Security Level": "Border", "Race": "Argon", "Sector Size": "40 km", "Sun Strength": "150%", "Description": "This crowded system produces high quality wares and resources for the neighboring systems. In the past, the Goner sect used the orbital temple as a base in their search for the origins of sentient life throughout the known universe. Many spent their lives studying ancient legends and engaging in deep historical analysis that eventually lead to the existence of Earth being proven to be more than just a myth."},
+{"Name": "Nopileos's Memorial", "Planets": "2", "Population": "21,454,287", "Security Level": "Border", "Race": "Pirate", "Sector Size": "65 km", "Sun Strength": "150%", "Description": "Bathed in the scorched glow of a burning nebula, this system was leveled by the devastating experimental weaponry used by Xenon forces in the last great conflict. Once a busy cosmopolitan trading outpost, it is now a rough and ready mining community run by smuggler overlords, possibly in the pay of the powerful Paranid Jewellery cartels."},
+{"Name": "Pontifex's Seclusion", "Planets": "2", "Population": "67,844,702", "Security Level": "Border", "Race": "Paranid", "Sector Size": "60 km", "Sun Strength": "150%", "Description": "This is last sector to be occupied in the New Dutchy Sectors. This sector is famed for its lack of hospitality. It is said to be a retreat for the Pontifex in case he needs to leave the main sectors and be out of contact for one reason or another . Deep within the Second Dutchy, this sector is hard to reach, especially with the pirate sectors inhabiting a route into this area."},
+{"Name": "Akeela's Beacon", "Planets": "3", "Population": "97,893,484", "Security Level": "Border", "Race": "Argon", "Sector Size": "170 km", "Sun Strength": "400%", "Description": "Akeela's Beacon is a large sector, and it features the highest Sun rating of any sector in the game, at 400%."},
+{"Name": "Kingdom End", "Planets": "3", "Population": "1,247,631,758", "Security Level": "Core", "Race": "Boron", "Sector Size": "55 km", "Sun Strength": "150%", "Description": "This sector contains one of the most varied selections of products in the known universe.  Equipment, raw materials, ship upgrades, and installations of many types can be traded here in a relatively secure environment.  This is the Boron home world and a place of quiet contemplation and study."},
+{"Name": "President's End", "Planets": "3", "Population": "68,598,614", "Security Level": "Border", "Race": "Argon", "Sector Size": "60 km", "Sun Strength": "150%", "Description": "Now little more than a smouldering shell, Preident's End stands testament to the ferocity of the Kha'ak. What little remains here has been left untouched, a silent memorial and burial ground to the countless souls who lost their lives, unable to escape this sector's final demise. With gates that link to areas that hold even greater anarchy, Argon security patrols struggle to maintain any semblance of control over the sector. Plans to rebuild are still held back by the fear of further reprisals. Perhaps in time President's End will see a new beginning, but until then this sector remains in mourning."},
+{"Name": "Titan", "Planets": "2", "Population": "9,368,009", "Security Level": "Core", "Race": "Terran", "Sector Size": "80 km", "Sun Strength": "150%", "Description": "Within the cold dark seas of Titan, many see the primordial beginnings of a future home alongside Earth. Left untouched by terraforming, for now that future remains unblemished."},
+{"Name": "Nyana's Hideout", "Planets": "2", "Population": "23,908,376", "Security Level": "Border", "Race": "Argon", "Sector Size": "100 km", "Sun Strength": "100%", "Description": "Named after the Argon heroine and Goner priestess Nyana Gunne, great-granddaughter of the famous Argon leader Nathan Gunne, this system was the location of some of more colourful events in her life. It is now a rough place where times are hard and people harder. There is much illegal activity in this system and skirmishes are common."},
+{"Name": "Spring of Belief", "Planets": "2", "Population": "47,076,119", "Security Level": "Border", "Race": "Paranid", "Sector Size": "80 km", "Sun Strength": "150%", "Description": "Spring of Belief was originally a Boron sector named \"Queen's Paradise\". An accident during a scientific experiment on the planet's surface released vast amounts of radiation. Soon after, the local population started to die of a mysterious disease. When it was discovered that the radiation was the cause, the Boron Government ordered an evacuation of the sector, but the radiation affected electronic systems onboard their craft. As the radiation grew weake, the Paranid finally settled in this system and claimed it as their own. With the radiation now a minor problem, the Boron Government has tried to reclaim the system, but the Paranid Government refuses to give up their tenure."},
+{"Sun Strength": "150%", "Planets": "", "Name": "Xenon Sector 695", "Race": "Xenon", "Security Level": "Border", "Sector Size": "km", "Population": ""},
+{"Sun Strength": "150%", "Planets": "", "Name": "Xenon Sector 596", "Race": "Xenon", "Security Level": "Border", "Sector Size": "km", "Population": ""},
+{"Sun Strength": "100%", "Planets": "", "Name": "Maelstrom", "Race": "Pirates", "Security Level": "Border", "Sector Size": "km", "Population": ""},
+{"Sun Strength": "150%", "Planets": "", "Name": "Xenon Sector 597", "Race": "Xenon", "Security Level": "Border", "Sector Size": "km", "Population": ""},
+{"Description": "Sector is not recognised in the database.", "Sun Strength": "150%", "Planets": "3", "Name": "Lasting Vengeance", "Race": "Pirates", "Security Level": "Border", "Sector Size": "80 km", "Population": "Unknown"},
+{"Sun Strength": "150%", "Planets": "", "Name": "Xenon Core 023", "Race": "Xenon", "Security Level": "Core", "Sector Size": "km", "Population": ""},
+{"Sun Strength": "150%", "Planets": "", "Name": "The Vault", "Race": "Teladi", "Security Level": "Border", "Sector Size": "km", "Population": ""},
+{"Description": "Known as Unseen Domain in Albion Prelude", "Sun Strength": "150%", "Planets": "", "Name": "Unseen Domain", "Race": "Unknown", "Security Level": "Border", "Sector Size": "km", "Population": ""},
+{"Sun Strength": "150%", "Planets": "", "Name": "Xenon Sector 472", "Race": "Xenon", "Security Level": "Border", "Sector Size": "km", "Population": ""},
+{"Sun Strength": "150%", "Planets": "", "Name": "Xenon Sector 627", "Race": "Xenon", "Security Level": "Border", "Sector Size": "km", "Population": ""},
+{"Description": "Sector is not recognised in the database", "Sun Strength": "100%", "Planets": "3", "Name": "Emperor's Pride", "Race": "Unknown", "Security Level": "Border", "Sector Size": "40 km", "Population": "Unknown"},
+{"Sun Strength": "100%",  "Name": "Mercenaries Rift", "Race": "Unknown", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "100%",  "Name": "Enduring Light", "Race": "Argon", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "150%",  "Name": "Enduring Light", "Race": "Argon", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "150%",  "Name": "Distant Clouds", "Race": "Boron", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "150%",  "Name": "Quiet Tides", "Race": "Boron", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "100%",  "Name": "Lost Order", "Race": "Unknown", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "100%",  "Name": "Xenon Sector", "Race": "Xenon", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "150%",  "Name": "Terran Unknown Sector 1", "Race": "Terran", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "150%",  "Name": "Terran Unknown Sector 2", "Race": "Terran", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "150%",  "Name": "Terran Unknown Sector 3", "Race": "Terran", "Security Level": "Border", "Population": "Unknown"},
+{"Sun Strength": "150%",  "Name": "Terran Unknown Sector 4", "Race": "Terran", "Security Level": "Border", "Population": "Unknown"}
+
+]
+}
+
+
+
+function getNeighborNodes(graph, node)
+{
+	arr = [];
+	
+	for (var i = 0; i < graph.links.length; i++)
+	{
+		curseArc = graph.links[i];
+		if (curseArc.source == node)
+		{
+			arr.push(curseArc.target)
+		}
+		if (curseArc.target == node)
+		{
+			arr.push(curseArc.source)
+		}
+	}
+	
+	return arr;
+}
+
+function highlightInvolvedEdges(graph)
+{
+	var linkPool = d3.selectAll('.link');
+	var nodePool = d3.selectAll('.node');
+	
+	for (i = 0; i < graph.links.length; i++)
+	{
+		var curLinkD3 = d3.select(linkPool[0][i]);
+		curLinkD3.style('stroke','gray');
+		curLinkD3.style('opacity','.3');
+	}
+
+	for (i = 0; i < graph.links.length; i++)
+	{
+		var curLinkD3 = d3.select(linkPool[0][i]);
+		var curLink = graph.links[i];
+		var prevNodeD3 = d3.select(nodePool[0][curLink.source.index]);
+		var nextNodeD3 = d3.select(nodePool[0][curLink.target.index]);
+		if (prevNodeD3.style('stroke-width') > 0 && nextNodeD3.style('stroke-width') > 0 )
+		{
+			curLinkD3.style('stroke','red');
+			curLinkD3.style('opacity','1');
+		}
+	}
+}
+
+function dijkstra(graph, initNode, goalNode)
+{
+
+
+	iterone = 0;
+	var visitedSet = [];
+	var unvisitedSet = [];
+	
+	for (i = 0; i < graph.nodes.length;i++)
+	{	
+		graph.nodes[i].visitedDijk = 0;
+		unvisitedSet.push(graph.nodes[i]);
+	}
+		
+	var curHistory = [];
+	
+	// Step 1 & 2
+	var currentNode = initNode;
+	for(i = 0; i < unvisitedSet.length; i++)
+	{
+		unvisitedSet[i].dijkDist = 1000000;
+	}
+	currentNode.dijkDist = 0;
+
+	
+	// Steps 3-6
+	while(true)
+	{
+	
+		neighbors = getNeighborNodes(graph, currentNode);
+		
+		for (ni = 0; ni < neighbors.length; ni++)
+		{
+			neighbor = neighbors[ni];
+			flandersIndex = 0;
+			
+			if (neighbor.visitedDijk == 0)
+			{
+				
+				neighbor.dijkDist = Math.min(neighbor.dijkDist, currentNode.dijkDist + 1);
+				if (neighbor.dijkDist == currentNode.dijkDist+1)
+					neighbor.dijkPred = currentNode;
+				flandersIndex++;
+			}
+		
+		}
+		
+		currentNode.visitedDijk = 1;
+		for (j = 0; j < unvisitedSet.length; j++)
+		{
+			if (unvisitedSet[j] == currentNode)
+				unvisitedSet.splice(j, 1);
+		}
+		visitedSet.push(currentNode);
+		
+		
+		iterone++;
+		
+		if (currentNode == goalNode)
+		{
+			
+			break;
+		}
+		
+
+		smallestDistance = Number.POSITIVE_INFINITY;	
+		sdNode = null;
+		for (uvi = 0; uvi < unvisitedSet.length; uvi++)
+		{
+			unvisitedNode = unvisitedSet[uvi];
+			if (unvisitedNode.dijkDist <= smallestDistance && unvisitedNode.dijkDist != 1000000)
+			{
+			
+				sdNode = unvisitedNode;
+				smallestDistance = unvisitedNode.dijkDist;
+			}
+		}
+		
+		
+		currentNode = sdNode;
+	 
+	}
+	
+	if (currentNode == null)
+	{
+		strHTML += "Can't get to " + goalNode.name;
+		document.getElementById("itinerary").innerHTML = strHTML;
+		return;
+	}
+	//d3.selectAll('.node').attr('opacity','0.1');
+	d3.selectAll('.node').style('stroke-width','0');
+	d3.selectAll('.node').style('stroke','black');
+	d3.select(initNode.up).style('stroke-width','5');
+	backtraceNode = goalNode;
+	curHistory.push("Arrive at: " + JSON.stringify(backtraceNode.name));
+	doOnce = 0;
+	instruCnt = 1;
+	while (backtraceNode != initNode)
+	{	instruCnt++;
+	if (doOnce != 0)
+	
+	var cNode = backtraceNode;
+	//alert(JSON.stringify(backtraceNode.attr));
+	//d3.select(backtraceNode.up).attr('opacity','1');
+	
+	d3.select(backtraceNode.up).style('stroke-width','5');
+		backtraceNode.r = "black";
+		
+	curHistory.push("Travel to: " + JSON.stringify(backtraceNode.name));
+	doOnce = 1
+
+		backtraceNode = backtraceNode.dijkPred;
+		
+	}curHistory.push("Start from " + JSON.stringify(backtraceNode.name));
+	
+	highlightInvolvedEdges(graph);
+	//alert(JSON.stringify(curHistory));
+	strHTML = "Here is the route guidance for your trip to "+goalNode.name+":<ul>";
+	
+	for ( xi = 0; xi < instruCnt-1; xi++)
+	{
+		
+		strHTML += "<li>"+curHistory.pop().replace('\"','').replace('\"','')+"</li>";
+	}
+	strHTML += "<li>"+curHistory.pop().replace('\"','').replace('\"','')+"</ul>";
+	strHTML += "<br>" + (instruCnt-1) + " gate jumps required for this route.";
+	if (instruCnt == 1)
+		instruCnt = 2;
+	strHTML += "<br>" + (instruCnt-1)*5 + " energy cells required to use jumpdrive in a fighter class ship (M5,M4,M3)";
+	strHTML += "<br>" + (instruCnt-1)*10 + " energy cells required to jumpdrive in a support/transport class ship (TS,TM,TP,M8,M6)";
+	strHTML += "<br>" + (instruCnt-1)*20 + " energy cells required to jumpdrive in a capital ship (M7,M1,M2,TL)";
+	
+	document.getElementById("itinerary").innerHTML = strHTML;
+	//alert(JSON.stringify(currentNode));
+	
+	
+}
+
+
+
+
+var lastBiggie = null;
+var infoTog = true;
+function toggleInfo()
+{
+	infoTog = !infoTog;
+	if (infoTog)
+		panel.style.display = "";
+	else
+		panel.style.display = "none";
+}
+
+
+var elephant = document.getElementById("SYS");
+var rhino = document.getElementById("SYS2");
+var panel = document.getElementById("panel");
+
+var width = 1200,
+    height = 1000;
+	
+	var globGraph;
+
+var color = d3.scale.category20();
+color = function(inigo) {
+	if (inigo == 'Teladi')
+		return '#00FF00';
+	else if (inigo == 'Terran')
+		return '#ffff00';
+	else if (inigo == 'Xenon')
+		return '#f08080';
+	else if (inigo == 'Pirate'||inigo == 'Pirates')
+		return '#ff0000';
+	else if (inigo == 'Argon')
+		return '#0000ff';
+	else if (inigo == 'Boron')
+		return '#008080';
+	else if (inigo == 'Paranid')
+		return '#ff8c00';
+	else if (inigo == 'Khaak')
+		return '#5a55d3';
+	else if (inigo == 'Split')
+		return '#800080';
+	else if (inigo == 'Yaki')
+		return '#FF00FF';
+	else if (inigo == 'Goner')
+		return '#00CED1';
+	else if (inigo == 'Unknown')
+		return '#00FFFF';
+	else
+		return '#e6e6fa';
+}
+
+var force = d3.layout.force()
+    .charge(-120)
+    .linkDistance(30)
+    .size([width, height]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("X3APSectors.json", function(error, graph) {
+  force
+      .nodes(graph.nodes)
+      .links(graph.links)
+      .start();
+	  
+	  globGraph = graph;
+
+   destNode = graph.nodes[3];
+
+   
+   for (i = 0; i < sectors.nodes.length; i++)
+	{
+	for (j = 0; j < graph.nodes.length; j++)
+	{
+		if (graph.nodes[j].name == sectors.nodes[i].Name)
+		{
+			
+			graph.nodes[j].group = sectors.nodes[i].Race;
+			graph.nodes[j].description = sectors.nodes[i].Description;
+			graph.nodes[j].stats = sectors.nodes[i].Race+" "+sectors.nodes[i]["Security Level"];
+			graph.nodes[j].ambient = "Solar Power: "+sectors.nodes[i]["Sun Strength"]+" Planets: "+sectors.nodes[i]["Planets"] + " Population: " + sectors.nodes[i]["Population"];
+			break;
+		}
+	}
+	
+	}
+	toggleInfo();
+	
+	
+
+  var link = svg.selectAll(".link")
+      .data(graph.links)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return Math.sqrt(d.value)+5; });
+
+  var node = svg.selectAll(".node")
+      .data(graph.nodes)
+    .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", 10)
+      .style("fill", function(d) {  this.__data__.up = this;  return color(d.group); })
+      .call(force.drag)
+	  .on("mousedown", function(d) { 
+	  selNode = d;
+	  elephant.innerHTML = d.name; d3.select(this).attr("r", 20);
+	  if (lastBiggie)
+		lastBiggie.attr("r",10);
+	  lastBiggie = d3.select(this);
+	 
+	  dijkstra(graph, d, destNode);
+	  
+	  rhino.innerHTML = ((d.description)?d.description:'') + "<br><br> Affiliation: <b>" + d.stats + "</b>" + "&nbsp&nbsp<br><br> Environment: <b>" + d.ambient + "</b>&nbsp&nbsp#"+d.index; infoTog = false; toggleInfo();
+});
+
+  node.append("title")
+      .text(function(d) { return d.name; d.description='' });
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+  });
+});
+
+
+
+</script>
+<br><br><br><br><br><br><p id="itinerary"></p>
